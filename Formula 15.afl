@@ -1,0 +1,86 @@
+SetPositionSize(1, spsShares);
+Buy=Sell=Short=Cover=0;
+
+//here is original strategy
+Length=30;
+MAValue=MA(C,Length);
+for(i=1; i<BarCount; i++)
+{
+if(C[i-1]<MAValue[i-1] AND C[i]>MAValue[i])
+Buy[i]=Cover[i]=1;
+
+if(C[i-1]>MAValue[i-1] AND C[i]<MAValue[i])
+Short[i]=Sell[i]=1;
+
+}
+
+
+//here is Position Scale In
+Buyindex=0;
+Shortindex=0;
+
+for(i=0; i<BarCount; i++)
+{
+if(Buy[i]>0)
+{ 
+  Buyindex=i;
+  Shortindex=0;
+}
+
+if(Buyindex>0 AND i-Buyindex>3)
+{
+  Buy[i]=sigScaleIn;
+  Buyindex=0;
+}
+
+if(Short[i]>0)
+{
+Buyindex=0;
+Shortindex=i;
+}
+
+if(Shortindex>0 AND i-Shortindex>3)
+{
+  Short[i]=sigScaleIn;
+  Shortindex=0;
+} 
+
+}
+
+
+
+
+
+PlotShapes(Buy * shapeSmallUpTriangle ,colorRed, 0,Low,-50); 
+//PlotShapes(Sell * shapeHollowSmallDownTriangle ,colorDarkRed, 0,High,-45);
+PlotShapes(Short * shapeSmallDownTriangle ,colorGreen, 0,Low,-50); 
+//PlotShapes(Cover * shapeHollowSmallUpTriangle ,colorDarkGreen, 0,High,-45);
+
+
+dist=1.5*ATR(10);
+for( i = 1; i < BarCount; i++ ) 
+{ 
+if( Buy[i-1] ) PlotText( "Buy\n@" + BuyPrice[ i-1 ], i, Low[ i ]-dist[i], colorRed ); 
+
+if(NOT Short[i-1])
+if( Sell[i-1] ) PlotText( "Sell\n@" + SellPrice[ i-1 ], i, High[ i ]+dist[i], colorDarkRed ); 
+
+if(NOT Buy[i-1])
+if( Cover[i-1] ) PlotText( "Cover\n@" + CoverPrice[ i-1 ], i, Low[ i ]-dist[i], colorDarkGreen ); 
+
+if( Short[i-1] ) PlotText( "Short\n@" + ShortPrice[ i-1 ], i, High[ i ]+dist[i], colorGreen ); 
+
+} 
+
+
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", ParamColor("Color", colorBlack ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+
+_SECTION_BEGIN("MA1");
+P = ParamField("Price field",-1);
+Periods = Param("Periods", 15, 2, 300, 1, 10 );
+Plot( MA( P, Periods ), _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 
+_SECTION_END();

@@ -1,0 +1,9 @@
+// Example Trading system
+//
+// very simple trading system : §¡½u¥æ¤e
+
+FMA = MA(C, 3);
+SMA = MA(C, 20);
+
+Buy = Cross(FMA, SMA);
+Sell = Cross(SMA, FMA);

@@ -1,0 +1,31 @@
+//------------------------------------------------------
+//  Formula :    back and buying system daily
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// position
+MarginDeposit = 1;
+PositionSize = 1;
+
+HighInterval = Optimize("HighInterval", 20, 3 ,25, 1);
+LowInterval = Optimize("LowInterval", 5, 1 ,20, 1);
+HighPrice = HHV(Ref(H, -3), HighInterval);
+LowPrice = LLV(Ref(L,-3), LowInterval);
+
+Buy = H> LowPrice AND H > HighPrice;
+Sell = L < Ref(LowPrice, -1) ;
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+StopLoss=30;
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0);

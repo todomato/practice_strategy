@@ -1,0 +1,78 @@
+_SECTION_BEGIN("Background_Setting");
+SetChartBkColor(1);
+SetChartOptions(2,chartShowArrows|chartShowDates|chartWrapTitle);
+SetChartBkGradientFill(1, 1, 1);
+GraphXSpace = Param("Zoom/In Out",100,-50,150,1);
+_SECTION_END();
+
+_SECTION_BEGIN("Backtest Setting");
+SetPositionSize(1, spsShares);
+SetOption("InitialEquity", 1000000);
+SetOption("CommissionMode", 3);
+SetOption("CommissionAmount", 1000);
+RoundLotSize = 1;
+PointValue = 200;
+_SECTION_END();
+
+_SECTION_BEGIN("Trading Rules");
+barcomplete = BarIndex() < LastValue(BarIndex());
+Length1 = 30;
+Length2 = 300;
+
+Mae1 = AMA( C, 2 / (length1 + 1 ) );
+Mae2 = AMA( C, 2 / (length2 + 1 ) );
+
+Plot(Mae1, "", 7, 1);
+Plot(Mae2, "", 6, 1);
+
+Buy = C>MAe1 AND C>MAe2 AND barcomplete;
+Short = C<MAe1 AND C<MAe2 AND barcomplete;
+
+BuyPrice = CoverPrice = C;
+ShortPrice = SellPrice = C;
+
+Buy = Cover = ExRem(Buy, Short);
+Short = Sell = ExRem(Short, Buy);
+
+P1 = IIf(Buy, 1, IIf(Short, -1, 0));
+P1 = ValueWhen(P1!=0, P1, 1);
+
+SEntry = ValueWhen(Buy OR Short, MAe1, 1);
+
+addBuy = C>SEntry+100;
+addShort = C<SEntry-100;
+
+addBuy =  ExRem(addBuy , Short);
+addShort = ExRem(addShort , addBuy );
+
+P2 = IIf(addBuy , 1, IIf(addShort , -1, 0));
+P2 = ValueWhen(P2!=0, P2, 1);
+
+CP =
+IIf(Buy AND Ref(P1+P2, -1) == -2, 1,
+IIf(Short AND Ref(P1+P2, -1) == 2, -1,
+IIf(Short AND Ref(P1, -1) == 1, -1,
+IIf(Buy AND Ref(P1, -1) == -1, 1,
+IIf(addBuy AND P1 == P2, 2,
+IIf(addShort AND P1 == P2, -2, 0))))));
+
+CurrentPosition = ValueWhen(CP !=0, CP, 1);
+_SECTION_END();
+
+_SECTION_BEGIN("Charts");
+SetBarFillColor(IIf(O>C,19,24));
+PlotOHLC(O,H,L,C,"",IIf(O>C,34,32),64+4096);
+PlotShapes(IIf(Buy, shapeDigit1, shapeNone), 9, 0, WMA(O,10)-2*ATR(15), 6);  
+PlotShapes(IIf(Short, shapeDigit1, shapeNone), 10, 0, WMA(O,10)+2*ATR(15), 0);
+PlotShapes(IIf(addBuy , shapeDigit2, shapeNone), 9, 0, WMA(O,10)-2*ATR(15), 6);  
+PlotShapes(IIf(addShort , shapeDigit2, shapeNone), 10, 0, WMA(O,10)+2*ATR(15), 0);
+_SECTION_END();
+
+_SECTION_BEGIN("Position");
+GfxSelectFont("Tahoma", Status("pxheight")/7*0.5 );
+GfxSetTextAlign( 6 );
+GfxSetBkMode(0);
+GfxSelectFont("Tahoma", Status("pxheight")/7*0.2 );
+GfxSetTextColor( 3 );
+GfxTextOut( "  Position: "+CurrentPosition, Status("pxwidth")/1.35, Status("pxheight")/(55*0.02));
+_SECTION_END();

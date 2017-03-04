@@ -1,0 +1,5 @@
+Plot( Volume,
+      "Volume",
+      IIf( C > O, ParamColor("Up Color", colorGreen ), ParamColor("Down Color", colorRed ) ),
+      ParamStyle( "Style", styleHistogram | styleThick, maskHistogram ),
+      minval = Null, maxval = Null, xshift = 0, zshift = 0, width = -60 );

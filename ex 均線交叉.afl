@@ -1,0 +1,13 @@
+// Example Trading system
+//
+// very simple trading system : §¡½u¥æ¤e
+// set up to optimize.
+
+MA1Length = Optimize("MA1Length",3 , 1, 20, 1);
+MA2Length = Optimize("MA2Length",20 , 5, 50, 5);
+
+FMA = MA(C, MA1Length);
+SMA = MA(C, MA2Length);
+
+Buy = Cross(FMA, SMA);
+Sell = Cross(SMA, FMA);

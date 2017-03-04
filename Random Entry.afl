@@ -1,0 +1,26 @@
+// Frequency is the number of entries per yean
+Frequency = Param("Entries per Year",12,1,100,1);
+
+// Repeatable is a switch.
+// True (U: the sequence of random numbers will be repeated
+// False (0): each sequence is random.
+Repeatable = Param("Repeatab1e",0,0,1,1);
+
+// Seed is the number used to start the random sequence
+// when repeatable sequences are desired.
+Seed = Param("Seed",13331,1,99999,1);
+
+// Generate a fraction, uniformly distributed
+// between 0.00000 AND 0.99999.
+NextRandom = IIf(Repeatable,Random(Seed),Random());
+Buy = IIf(NextRandom<Frequency/252,1,0);
+
+// The code for the exit being tested starts here.
+// HoldBars is the number of bars to wait for exit.
+HoldBars = Param("HoldBars",3,1,100,1);
+Sell = BarsSince(Buy)>=HoldBars;
+
+// The code for the exit being tested ends here.
+// Remove extra Buy and Sell signals.
+Buy = ExRem(Buy,Sell);
+Sell = ExRem(Sell,Buy);

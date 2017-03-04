@@ -1,0 +1,42 @@
+//------------------------------------------------------
+//  Formula :    breakout buying system both buy and short
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// 部位設定
+PositionSize = MarginDeposit = 1;
+
+// 時間
+FirstTradeTime = 090000;
+SquareOffTime = 132900;
+
+HighInterval = Optimize("HighInterval", 15, 5 ,25, 1);
+HighPrice = HHV(H, HighInterval);
+Buy = H > Ref(HighPrice, -1) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+//BuyPrice = Ref(HighPrice, -1) +3; 	
+
+LowInterval = Optimize("LowInterval", 5, 1 ,15, 1);
+LowPrice = LLV(L, LowInterval);
+Sell = L< Ref(LowPrice, -1);
+//SellPrice = Ref(LowPrice, -1) -3;	
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+
+LowPrice = LLV(L, HighInterval);
+Short = L < Ref(LowPrice, -1) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+//ShortPrice = Ref(LowPrice, -1) -3;	
+HighPrice = HHV(L, LowInterval);
+Cover = H> Ref(HighPrice, -1) ;
+//CoverPrice = Ref(HighPrice, -1) +3;	
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);

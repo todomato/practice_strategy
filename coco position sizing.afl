@@ -1,0 +1,210 @@
+//For 30min Long & Short
+SetPositionSize(1, spsShares);
+//SetPositionSize(20, spsPercentOfEquity);
+
+HighPeriod=25;
+LowPeriod=50;
+//HighPeriod=Optimize("High Period", 25, 10, 60, 5);
+//LowPeriod=Optimize("Low Period", 50, 10, 60, 5);
+
+HighValue=Ref(HHV(H, HighPeriod),-1);
+LowValue=Ref(LLV(L, LowPeriod),-1);
+Plot(HighValue,"High Value", colorGreen, styleLine);
+Plot(LowValue,"Low Value", colorGreen, styleLine);
+
+Buy=Sell=Short=Cover=0;
+TrendIndex=0;
+RSIvalue=RSI(9);
+for(i=1; i<BarCount; i++)
+{
+        if(TrendIndex<1)
+        if(C[i]>HighValue[i])
+        {
+                Buy[i]=Cover[i]=1;
+                TrendIndex=1;
+        }
+
+        if(TrendIndex>-1)
+        if(C[i]<LowValue[i])
+        {
+                Short[i]=Sell[i]=1;
+                TrendIndex=-1;
+        }
+
+}
+TrendIndex=Flip(Buy, Short);
+WriteVal(TrendIndex);
+
+ATRvalue=ATR(10);
+VarSet("scalein", 0);
+VarSet("lastprice",0);
+//ScaleInTimes=Optimize("ScaleIn", 2, 0, 10, 1);
+ScaleInTimes=0;
+for(i=1; i<BarCount; i++)
+{
+
+scalein=VarGet("scalein");
+Lastprice=VarGet("lastprice");
+
+        if(TrendIndex[i]>0)
+        if(Buy[i]==0)
+        if(scalein<ScaleInTimes)
+        if(C[i]>C[i-1])
+        if(C[i]>Lastprice+ATRvalue[i])
+{
+                Buy[i]=sigScaleIn;
+                scalein++;
+                VarSet("scalein", scalein);
+                VarSet("lastprice", C[i]);
+        }
+        
+        if(TrendIndex[i]<1)
+        if(Short[i]==0)
+        if(scalein<ScaleInTimes)
+        if(C[i]<C[i-1])
+        if(C[i]<Lastprice-ATRvalue[i])
+{
+                Short[i]=sigScaleIn;
+                scalein++;
+                VarSet("scalein", scalein);
+                VarSet("lastprice", C[i]);
+        }
+
+        if(Buy[i]==1)
+        {
+                VarSet("scalein", 0);
+                VarSet("lastprice", 0);
+        }
+
+        if(Short[i]==1)
+        {
+                VarSet("scalein", 0);
+                VarSet("lastprice", C[i]*10);
+        }
+
+
+}
+
+
+///////////Position Control/////////////////
+Loop=Optimize("Loop",1,1,1,1);//For Walk Forward Analysis
+
+ATRValue=ATR(10);
+RiskValue=IIf(abs(Close-HighValue)>abs(Close-LowValue), abs(Close-HighValue), abs(Close-LowValue));
+
+//method 1
+RiskValue=RiskValue+ATRValue;
+//method 2
+//RiskValue=ATRValue*4;
+AddToComposite(RiskValue, "~RiskValue", "X", 1);
+
+SetCustomBacktestProc("");
+if(Status("action")==actionPortfolio)
+{
+
+PValue=50;
+Deposit=21000;
+FixDollar=Deposit*5;
+RiskPercentage=0.10;
+DefaultFictious=500000;
+
+        bo=GetBacktesterObject();
+        bo.Preprocess();
+        for(bar=0; bar<BarCount; bar++)
+        {
+                CurrentEquity=bo.Equity;
+
+//                if(CurrentEquity<DefaultFictious)//FictiousEquity Calculation
+                FictiousEquity=DefaultFictious;
+//                else
+//                FictiousEquity=CurrentEquity;
+
+                for(sig=bo.GetFirstSignal(bar); sig; sig=bo.GetNextSignal(bar) )
+                {
+                        
+                                method=0;//change this value to decide which method you want to use
+                                switch(method)
+                                {
+                                        case 0:        //Position Sizing Method: Fix Size
+                                        shares=1;
+                                        break;
+
+                                        case 1:        //Position Sizing Method:  Fix Dollar Amout of Equity
+                                        if( floor(CurrentEquity/FixDollar)>0)
+                                                sig.PosSize=Deposit*floor(CurrentEquity/FixDollar);
+                                        else
+                                                sig.PosSize=0;
+                                        break;
+
+                                        case 4://Show Hand
+                                        sig.PosSize=CurrentEquity;
+                                        break;
+
+                                        case 5://Stop Loss Normalization
+                                        RiskValue=Foreign("~RiskValue","X");
+                                        pos=(CurrentEquity*RiskPercentage/(RiskValue[bar]*PValue));
+                                        
+                                        if(pos>CurrentEquity/Deposit)
+                                        pos=floor(CurrentEquity/Deposit)-1;
+                                        if(pos<0)
+                                        pos=0;
+                                        //_TRACE("#"+WriteVal(bar)+"-"+WriteVal(RiskValue[bar])+"-"+WriteVal(pos));
+                                        sig.PosSize=pos*Deposit;
+                                        break;
+
+                                        case 6://Fictious Equity by ComeWish
+                                        RiskValue=Foreign("~RiskValue","X");
+                                        pos=(CurrentEquity+FictiousEquity)*RiskPercentage/(RiskValue[bar]*PValue);
+                                        if(pos>CurrentEquity/Deposit)
+                                        pos=floor(CurrentEquity/Deposit)-1;
+                                        if(pos<0)
+                                        pos=0;
+                                        //_TRACE("#"+WriteVal(bar)+"-"+WriteVal(RiskValue[bar])+"-"+WriteVal(pos));
+                                        sig.PosSize=pos*Deposit;
+
+                                        //if(sig.IsLong()==False AND sig.IsEntry())
+                                        //sig.PosSize/=2;
+
+                                        break;
+                                }
+                
+                }
+                bo.ProcessTradeSignals(bar);
+        }
+        bo.PostProcess();
+
+}
+////////////////////////////Position Control END/////////////////////////////////////////////////
+
+
+SystemName="HighLowBands";
+
+SignalColor=Flip(Buy,Short);
+PlotOHLC(O,H,L,C,"Trend",IIf(SignalColor, colorRed, colorGreen), styleCandle);
+
+
+PlotShapes(Buy * shapeSmallUpTriangle ,colorRed, 0,Low,-50); 
+//PlotShapes(Sell * shapeHollowSmallDownTriangle ,colorDarkRed, 0,High,-45);
+PlotShapes(Short * shapeSmallDownTriangle ,colorGreen, 0,Low,-50); 
+//PlotShapes(Cover * shapeHollowSmallUpTriangle ,colorDarkGreen, 0,High,-45);
+
+dist=1.5*ATR(10);
+for( i = 1; i < BarCount; i++ ) 
+{ 
+if( Buy[i-1] ) PlotText( "Buy\n@" + BuyPrice[ i-1 ], i, Low[ i ]-dist[i], colorRed ); 
+
+//if(NOT Short[i-1])
+//if( Sell[i-1] ) PlotText( "Sell\n@" + SellPrice[ i-1 ], i, High[ i ]+dist[i], colorDarkRed ); 
+
+//if(NOT Buy[i-1])
+//if( Cover[i-1] ) PlotText( "Cover\n@" + CoverPrice[ i-1 ], i, Low[ i ]-dist[i], colorDarkGreen ); 
+
+if( Short[i-1] ) PlotText( "Short\n@" + ShortPrice[ i-1 ], i, High[ i ]+dist[i], colorGreen ); 
+
+} 
+
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", ParamColor("Color", colorBlack ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();

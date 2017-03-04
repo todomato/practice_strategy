@@ -1,0 +1,39 @@
+//------------------------------------------------------
+//  Formula :    MA cross system
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+// set up the lengths for mv
+//Length1 = Param("Length1", 6 ,1 ,81,2);
+//Length2 = Param("Length2", 35,2,200,2);
+
+Length1 =45;// Optimize("Length1", 6 ,1 ,81,2);
+Length2 =26;// Optimize("Length2", 35,2,200,2);
+
+// the MV calculations
+MA1 = MA(C, Length1);
+MA2 = MA(C,Length2);
+
+// strategy
+Buy = Cross(MA1, MA2);
+Sell = Cross(MA2, MA1);
+
+
+//Compute the equity for the single ticker
+e = Equity();
+Maxe = LastValue(Highest(e));
+Plot( Close, "Price", colorBlack, stylecandle );
+
+// Plot the MA lines.
+Plot(MA1,"MA1",colorGreen,styleLine) ;
+Plot(MA2,"MA2",colorBlue,styleLine);
+
+// Plot the Buy and Sell arrows.
+shape = Buy * shapeUpArrow + Sell * shapeDownArrow;
+PlotShapes(shape, IIf(Buy,colorGreen,colorRed), 0,
+IIf(Buy,Low,High));
+
+//Plot the equity curve
+Plot(e,"Equity",colorBlue,styleLine|styleownScale,0,Maxe);
+Plot(10000, "",colorBlue,styleLine|styleownScale,0,Maxe);
+GraphXSpace = 5;

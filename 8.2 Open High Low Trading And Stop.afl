@@ -1,0 +1,78 @@
+//------------------------------------------------------
+//  Formula :    intraday combine 5. 6. method + stop
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+
+_SECTION_BEGIN("Product Settings");
+SetPositionSize(1, spsShares);
+SetOption("MaxOpenPositions", 15);
+SetOption("InitialEquity", 200000);
+SetOption("FuturesMode", 1);
+SetOption("CommissionMode", 3);
+SetOption("CommissionAmount", 2.5);
+RoundLotSize = 1;
+
+if(Name() == "6A #F")   {TickSize = 0.0001; MarginDeposit = 3000;  PS = 10000; PointValue = 10*PS;   }
+if(Name() == "6E #F")   {TickSize = 0.0001; MarginDeposit = 3000;  PS = 10000; PointValue = 12.5*PS; }
+if(Name() == "6J #F")   {TickSize = 0.0001; MarginDeposit = 4000;  PS = 10000; PointValue = 12.5*PS; }
+if(Name() == "6S #F")   {TickSize = 0.0001; MarginDeposit = 3000;  PS = 10000; PointValue = 12.5*PS; }
+if(Name() == "CL #F=1") {TickSize = 0.01;   MarginDeposit = 5000;  PS = 100;   PointValue = 10*PS;   }
+if(Name() == "GC #F=1") {TickSize = 0.1;    MarginDeposit = 9000;  PS = 10;    PointValue = 10*PS;   }
+if(Name() == "HG #F=1") {TickSize = 0.0005; MarginDeposit = 4000;  PS = 1000;  PointValue = 12.5*PS; }
+if(Name() == "HO #F=1") {TickSize = 0.0001; MarginDeposit = 5000;  PS = 10000; PointValue = 4.2*PS;  }
+if(Name() == "NG #F=1") {TickSize = 0.001;  MarginDeposit = 10000; PS = 1000;  PointValue = 10*PS;   }
+if(Name() == "SI #F=1") {TickSize = 0.005;  MarginDeposit = 12000; PS = 1000;  PointValue = 5*PS;    }
+if(Name() == "ES #F")   {TickSize = 0.25;   MarginDeposit = 4000;  PS = 100;   PointValue = 0.5*PS;  }
+if(Name() == "YM #F")   {TickSize = 1;      MarginDeposit = 4000;  PS = 1;     PointValue = 5*PS;    }
+if(Name() == "ZC #F")   {TickSize = 0.25;   MarginDeposit = 2500;  PS = 100;   PointValue = 0.5*PS;  }
+if(Name() == "ZS #F")   {TickSize = 0.25;   MarginDeposit = 4000;  PS = 100;   PointValue = 0.5*PS;  }
+if(Name() == "ZW #F")   {TickSize = 0.25;   MarginDeposit = 3000;  PS = 100;   PointValue = 0.5*PS;  }
+
+
+// 部位設定
+MarginDeposit = 1;
+PositionSize = 2;
+
+// 開收盤時間
+FirstTradeTime = 090000;
+SquareOffTime = 132700;
+EOD = Day() != Ref(Day(),-1);
+ExitTime = TimeNum() >= SquareOffTime OR EOD; 
+
+// 策略
+DayOpen=TimeFrameGetPrice("O",inDaily);
+
+Buy = High >= DayOpen + (TickSize * 50)  AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+Sell =  ExitTime; 
+Short = Low <= DayOpen - (TickSize * 40) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+Cover =  ExitTime; 
+
+
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+Short=ExRem(Short,Cover);
+Cover=ExRem(Cover,Short);
+
+// 停損
+StopLoss= (TickSize * 30);
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0, True);
+
+
+
+/* Plot Short and Cover Signal Arrows */
+/* Plot Buy and Sell Signal Arrows */
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-40);
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorLime, 0,L, Offset=-50);
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-45);
+PlotShapes(IIf(Cover, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-40);
+PlotShapes(IIf(Cover, shapeSquare, shapeNone),colorLime, 0,L, Offset=-50);
+PlotShapes(IIf(Cover, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-45);
+PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorRed, 0, H, Offset=40);
+PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorOrange, 0,H, Offset=50);
+PlotShapes(IIf(Sell, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-45);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorRed, 0, H, Offset=40);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorOrange, 0,H, Offset=50);
+PlotShapes(IIf(Short, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-45);
+
+_SECTION_END();

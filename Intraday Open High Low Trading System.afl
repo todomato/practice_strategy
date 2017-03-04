@@ -1,0 +1,39 @@
+//------------------------------------------------------
+//
+//  Formula Name:    Intraday Open High Low Trading System
+//  Author/Uploader: Trading Tuitions
+//  E-mail:          support@tradingtuitions.com
+//  Website:         www.tradingtuitions.com
+//------------------------------------------------------
+
+
+
+PositionSize = MarginDeposit = 1;
+NewDay = (Day()!= Ref(Day(), -1)) OR BarIndex() == 0;  
+ 
+
+FirstTradeTime=084500;
+SquareOffTime = 134500;
+
+DayOpen=TimeFrameGetPrice("O",inDaily);
+DayHigh = HighestSince(NewDay,H,1);  
+DayLow = LowestSince(NewDay,L,1);  
+
+
+Buy = (round(DayOpen)==round(DayLow)) AND High>=(sqrt(DayOpen)+0.0833)^2 AND (TimeNum()  >= FirstTradeTime) AND TimeNum()<SquareOffTime;  
+Short = (round(DayOpen)==round(DayHigh)) AND Low<=(sqrt(DayOpen)-0.0833)^2 AND (TimeNum()  >= FirstTradeTime) AND TimeNum()<SquareOffTime; 
+
+Sell = TimeNum() >= SquareOffTime;
+Cover = TimeNum() >= SquareOffTime; 
+
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+
+Short=ExRem(Short,Cover);
+Cover=ExRem(Cover,Short);
+
+StopLoss=0.5;
+ApplyStop(Type=0,Mode=1,Amount=StopLoss);
+
+Target=2.5;
+ApplyStop(Type=1,Mode=1,Amount=Target);

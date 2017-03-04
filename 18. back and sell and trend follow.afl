@@ -1,0 +1,33 @@
+//------------------------------------------------------
+//  Formula :    back and sell system daily and trend sell
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// position
+PositionSize = MarginDeposit = 1;
+
+HighInterval = Optimize("HighInterval", 5, 3 ,25, 1);
+LowInterval = Optimize("LowInterval", 20, 1 ,20, 1);
+HighPrice = HHV(H, HighInterval);
+LowPrice = LLV(L, LowInterval);
+
+Short = L < Ref(HighPrice, -1) AND L > LowPrice AND L <= MA(C, 120);
+//BuyPrice = C;
+//Sell = H > Ref(HighPrice, -1) + 40 ;
+Cover = H > Ref(HighPrice, -1) ;
+
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);
+
+
+StopLoss=30;
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0);

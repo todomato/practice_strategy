@@ -1,0 +1,36 @@
+//------------------------------------------------------
+//  Formula :    back and buying next second day system daily 
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// position
+MarginDeposit = 1;
+PositionSize = 1;
+
+HighInterval = Optimize("HighInterval", 20, 3 ,25, 1);
+LowInterval = Optimize("LowInterval", 5, 1 ,20, 1);
+
+HighPrice = HHV(Ref(H, -1), 20);
+LowPrice = LLV(Ref(C,-1), 5);
+
+// ½T»{®æ¨â¤¦A¶R  Ñ
+//Buy = Ref(C, -1) > Ref(LowPrice, -2) AND Ref(H,-1) < Ref(HighPrice, -2) AND C > MA(L, 200) AND  Ref(C,-1) > Ref(O, -1) AND C > Ref(C,-1);
+Buy = Ref(C, -1) > Ref(LowPrice, -1) AND Ref(H,-1) < Ref(HighPrice, -1) AND  Ref(C,-1) > Ref(O, -1) AND C > Ref(C,-1)  AND C > MA(L, 200);
+Sell =  C < Ref(LowPrice, -1) ;
+
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+
+StopLoss=30;
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0);

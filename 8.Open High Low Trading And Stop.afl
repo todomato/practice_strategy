@@ -1,0 +1,67 @@
+//------------------------------------------------------
+//  Formula :    intraday combine 5. 6. method + stop
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays( 1, 0, 0, 0 );
+SetOption( "InitialEquity", 200000);
+SetOption("FuturesMode" , True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// 部位設定
+MarginDeposit =1;
+PositionSize = 1;
+
+//MarginDeposit = 90000;
+//RiskPerContract = 30;
+// risk 2% of entire equity on single trade
+//PS =  Optimize("PS", 1, 0.5, 2, 0.1);
+//PctSize =  PS * MarginDeposit  / ( RiskPerContract * PointValue ); 
+//SetPositionSize( PctSize, spsPercentOfEquity );
+
+// 時間
+FirstTradeTime = 090000;
+SquareOffTime = 132700;
+EOD = Day() != Ref(Day(),-1);
+ExitTime = TimeNum() >= SquareOffTime OR EOD; 
+
+// 策略
+DayOpen=TimeFrameGetPrice("O",inDaily);
+
+Buy = High >= DayOpen + (TickSize * 50)  AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+BuyPrice = Close; // DayOpen + 50
+Sell =  ExitTime; 
+Short = Low <= DayOpen - (TickSize * 40) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+ShortPrice = Close;  // DayOpen - 40
+Cover =  ExitTime; 
+
+
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+Short=ExRem(Short,Cover);
+Cover=ExRem(Cover,Short);
+
+// 停損
+StopLoss=30;
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0, True);
+
+
+
+/* Plot Short and Cover Signal Arrows */
+/* Plot Buy and Sell Signal Arrows */
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-40);
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorLime, 0,L, Offset=-50);
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-45);
+PlotShapes(IIf(Cover, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-40);
+PlotShapes(IIf(Cover, shapeSquare, shapeNone),colorLime, 0,L, Offset=-50);
+PlotShapes(IIf(Cover, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-45);
+PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorRed, 0, H, Offset=40);
+PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorOrange, 0,H, Offset=50);
+PlotShapes(IIf(Sell, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-45);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorRed, 0, H, Offset=40);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorOrange, 0,H, Offset=50);
+PlotShapes(IIf(Short, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-45);

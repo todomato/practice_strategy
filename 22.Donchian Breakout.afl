@@ -1,0 +1,43 @@
+//DonchianBreakout.afl
+
+//Simplified version of breakout system
+//attributed to Richard Donchian and used
+//by Richard Dennis and the Turtles.
+//Buy an upside breakout of 20 day highs,
+//set a maximum loss stop based on volatility,
+//sell a downside breakout of 10 days lows.
+//Short a downside breakout of 20 day lows,
+//set a maximum loss stop based on volatility,
+//cover an upside breakout of 10 day highs.
+
+//Usually used on futures contracts.
+//To set up for a “points only" test,
+//uncomment the following line and set
+//Futures Mode to True on the Setting Menu.
+
+PositionSize = MarginDeposit = 1;
+
+StopPoints = 40;
+
+// 開收盤時間
+FirstTradeTime = 090000;
+SquareOffTime = 132900;
+
+
+Buy = H > Ref(HHV(H,20),-1) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+//BuyPrice = Ref(HHV(H,20),-1);
+Sell = L < Ref(LLV(L,10),-1);
+//SellPrice = Ref(LLV(L,10),-1);
+
+Buy = ExRem(Buy,Sell);
+Sell = ExRem(Sell,Buy);
+
+Short = L < Ref(LLV(L,20),-1) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime); 
+//ShortPrice = Ref(LLV(L,20),-1);
+Cover = H > Ref(HHV(H,10),-1);
+//CoverPrice = Ref(HHV(H,10),-1);
+
+Short = ExRem(Short,Cover);
+Cover = ExRem(Cover,Short);
+
+ApplyStop(stopTypeLoss,stopModePoint,StopPoints,1);

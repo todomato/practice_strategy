@@ -1,0 +1,17 @@
+//------------------------------------------------------
+//  Formula :    21.TBond Overnight
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+SetTradeDelays(0,0,0,0);
+BuyPrice = Close;
+SellPrice = Open;
+ShortPrice = Close;
+CoverPrice = Open;
+
+PositionSize = MarginDeposit = 1;
+
+Buy=C>O;
+Sell = Ref(Buy, -1) == 1;
+Short = C <O;
+Cover = Ref(Short, -1) ==1;

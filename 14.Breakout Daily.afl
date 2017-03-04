@@ -1,0 +1,42 @@
+//------------------------------------------------------
+//  Formula :    breakout buying system both buy and short
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// 部位設定
+PositionSize = MarginDeposit = 1;
+
+HighInterval = Optimize("HighInterval", 10, 1 ,25, 1);
+HighPrice = HHV(H, HighInterval);
+Buy = H > Ref(HighPrice, -1) ;
+//BuyPrice = Ref(HighPrice, -1) +5; 	
+
+LowInterval = Optimize("LowInterval", 5, 1 ,15, 1);
+LowPrice = LLV(L, LowInterval);
+Sell = L< Ref(LowPrice, -1);
+//SellPrice = C; Ref(LowPrice, -1) -5;	
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+///////
+
+LowPrice = LLV(L, HighInterval);
+Short = L < Ref(LowPrice, -1) ;
+//ShortPrice = Ref(LowPrice, -1) -5;		
+
+HighPrice = HHV(L, LowInterval);
+Cover = H> Ref(HighPrice, -1) ;
+//CoverPrice = C; Ref(HighPrice, -1) +5;		
+
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);

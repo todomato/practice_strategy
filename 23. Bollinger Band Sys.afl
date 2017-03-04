@@ -1,0 +1,77 @@
+
+// DualTimeFrameB0llingerBand.afl
+// This program uses daily data to take trades, providing
+// the weekly data permits the trade.
+
+// Both daily and weekly look at the position of the most
+// recent close within the Bollinger Bands.
+SetTradeDelays(0,0,0,0);
+BuyPrice = C;
+Se11Price = C;
+// 部位設定
+MarginDeposit =1;
+PositionSize = 1;
+
+// Set up the weekly filter
+TimeFrameSet(inWeekly);
+
+WeeklyLookBack = Optimize("WkLB",8,2,10,2);
+WeeklyBandWidth = Optimize("WkBW",1.1,1,2.5,.1);
+BBPctWeekly = (C - BBandBot(C,WeeklyLookBack,WeeklyBandWidth)) / (BBandTop(C,WeeklyLookBack,WeeklyBandWidth) - BBandBot(C,WeeklyLookBack,WeeklyBandWidth));
+BBPctWeekly = TimeFrameExpand(BBPctWeekly, inWeekly);
+
+// Return to daily data
+TimeFrameRestore();
+
+// -------------------------------------------- 
+// Set up daily trading system
+DailyLookBack = Optimize("DyLB",5,5,30,5);
+DailyBandWidth = Optimize("DyBW",1.1,1,2.5,.1);
+BBPctDaily = (C - BBandBot(C,DailyLookBack,DailyBandWidth)) / (BBandTop(C,DailyLookBack,DailyBandWidth) - BBandBot(C,DailyLookBack,DailyBandWidth));
+
+// There are a lot of conditions that might work --
+// Buy breakouts
+// Fade breakouts
+// Buy returns into bands
+// Buy breakouts
+Buy = (BBPctWeekly >= 0.90) AND (BBPctDaily >= 0.90);
+Sell = BBpctDaily <= 0.10;
+//Sell = BarsSince(Buy) >=3;
+Short = (BBPctWeekly <= 0.10) AND (BBPctDaily < 0.10);
+Cover = BBPctDaily >= 0.90;
+//Cover = BarsSince(Short) >=3;
+
+// Fade breakouts without waiting for prices to move
+// back into the band.
+// This does not work very well, at least
+// on the issues I tested.
+//Buy = (BBPctWeekly <= 0.10) AND (BBPctDaily <=0.10);
+//Sell = (BBPctDaily >= 0.90);
+//Short = (BBPctWeekly >= 0.90) AND (BBPctDaily >= 0.90);
+//Cover = (BBPctDaily <= 0.10);
+
+
+// Buy returns to the bands after excursions outside.
+// This does not work very well, at least
+// on the issues I tested.
+//Buy = ((BBpctWeekly <= 0.10) OR (Ref(BBPctWeekly,-1) <= 010))
+// AND (Ref(BBPctDaily,-1) <= 0.10)
+// AND (BBPctDaily > Ref(BBPctDaily,-1));
+//Sell = (BBPctDaily >: 0.90g
+//Short = ((BBPctWeekly >= 0.90) OR (Ref(BBPctWeekly,-1) >= 0.90))
+// AND (Ref(BBPctDaily,4) >= 0.90)
+// AND (BBpctDaily < Ref(BBPctDaily,-1));
+//Cover = (BBPctDaily <= 0.10);
+Buy = ExRem(Buy,Sell);
+Sell = ExRem(Sell,Buy);
+Short = ExRem(Short,Cover);
+Cover = ExRem(Cover,Short);
+Plot(C, "C", colorBlack, styleCandle);
+PlotShapes(Buy*shapeUpArrow + Sell*shapeDownArrow,
+IIf(Buy,colorGreen,colorRed));
+PlotShapes(Short*shapeHollowDownArrow
++ Cover*shapeHollowUpArrow,
+IIf(Short,colorRed,colorGreen));
+
+Plot(BBPctWeekly, "BBPctWk", colorBlue, styleLine | styleLeftAxisScale);
+Plot(BBPctDaily, "BBPctDy", colorGreen, styleLine | styleLeftAxisScale);

@@ -1,0 +1,26 @@
+// Backtester settings
+SetTradeDelays(0, 0, 0, 0);
+SetOption("InitialEquity", 200000);
+SetOption("MaxOpenPositions", 10);
+SetOption("CommissionMode", 3);
+SetOption("CommissionAmount", 200);
+SetOption("FuturesMode", 1);
+
+// Position sizing
+SetPositionSize(1, spsShares);
+
+NewDay = Day() != Ref(Day(), -1);
+EOD = Day() != Ref(Day(), 1);
+CloseTime = 134000;
+ExitTime = TimeNum() >= CloseTime OR EOD;
+
+RangeHigh = ValueWhen(NewDay, H);
+RangeLow = ValueWhen(NewDay, L);
+
+Buy = ref(H > RangeHigh, -1);
+Short = ref(L < RangeLow, -1);
+
+Sell = ExitTime;
+Cover = ExitTime;
+
+ApplyStop(stopTypeLoss, stopModePoint, 50, 1);

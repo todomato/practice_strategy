@@ -1,0 +1,36 @@
+//------------------------------------------------------
+//  Formula :    breakout selling system 
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+//SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// 部位設定
+PositionSize = MarginDeposit = 1;
+MALength = Optimize("MALength", 400, 50, 4000, 20);
+
+
+// 開收盤時間
+FirstTradeTime = 090000;
+SquareOffTime = 132900;
+EOD = Day() != Ref(Day(),-1);
+ExitTime = TimeNum() >= SquareOffTime OR EOD; 
+
+LowPrice = LLV(L, 20);
+Short = L < Ref(LowPrice, -1) AND (TimeNum() < SquareOffTime) AND (TimeNum() >= FirstTradeTime) AND L <= MA(C, MALength); 
+//ShortPrice = Ref(LowPrice, -1) -3;		// 加入滑價
+
+HighPrice = HHV(L, 10);
+Cover = H> Ref(HighPrice, -1);
+//CoverPrice = Ref(HighPrice, -1) +3;		// 加入滑價
+
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);

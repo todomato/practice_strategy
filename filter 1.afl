@@ -1,0 +1,17 @@
+PriceYearAgo = Ref(C, -2520);
+HistoryExists = PriceYearAgo != 0;
+
+//limit lowest closing price
+LowestCloes = LLV(C, 2520);
+PriceReasonable = LowestCloes > 10;
+
+Liquidity = MA(C*V, 252);
+LiquidityOK = Liquidity > 1000000;
+
+// set filter
+Filter = HistoryExists AND PriceReasonable AND LiquidityOK;
+
+AddColumn(C, "Close", 4.2);
+AddColumn(PriceYearAgo, "PriceYearAgo", 4.2);
+AddColumn(LowestCloes, "LowestCloes", 4.2);
+AddColumn(Liquidity, "Liquidity", 4.2);

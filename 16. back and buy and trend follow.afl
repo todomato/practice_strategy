@@ -1,0 +1,34 @@
+//------------------------------------------------------
+//  Formula :    back and buying system daily and trend follow
+//  Author  :    dreamrrrr
+//	desc : better than  no.15, beacuse Maxdd cut half but porift not cut half
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// position
+PositionSize = MarginDeposit = 1;
+
+HighInterval = Optimize("HighInterval", 20, 3 ,25, 1);
+LowInterval = Optimize("LowInterval", 5, 1 ,20, 1);
+HighPrice = HHV(H, HighInterval);
+LowPrice = LLV(L, LowInterval);
+
+Buy = H > Ref(LowPrice, -1) AND H < HighPrice AND H >= MA(C, 100);
+//BuyPrice = C;
+//Sell = H > Ref(HighPrice, -1) + 40 ;
+Sell = L < Ref(LowPrice, -1) ;
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+
+StopLoss=30;
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0);

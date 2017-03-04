@@ -1,0 +1,44 @@
+//------------------------------------------------------
+//  Formula :    back and buying system daily (workable 基本) + 限制高低點差
+//  Author  :    dreamrrrr
+//------------------------------------------------------
+
+//SetTradeDelays(0,0,0,0);
+SetOption( "InitialEquity", 300000);
+SetOption("FuturesMode" ,True);
+SetOption("MinShares",1);
+SetOption("AccountMargin",10);
+SetOption("RefreshWhenCompleted",True);
+SetOption( "AllowPositionShrinking", True );
+SetOption("MaxOpenPositions",10);
+
+// position
+MarginDeposit = 1;
+PositionSize = 1;
+barcomplete = BarIndex() < LastValue(BarIndex());
+//MarginDeposit = 25000;
+//RiskPerContract = 100;
+// //risk 2% of entire equity on single trade
+//PS =  Optimize("PS", 1, 0.5, 2, 0.1);
+//PctSize =  PS * MarginDeposit  / ( RiskPerContract * PointValue ); 
+//SetPositionSize( PctSize, spsPercentOfEquity );
+
+HighPrice = HHV(H, 20);
+LowCPrice = LLV(C, 5);
+LowPrice = LLV(L, 5);
+
+Buy = C> Ref(LowCPrice, -1) AND 	// 收高於前一天收
+		H < HighPrice AND 		// 高小於前高
+		C > MA(L, 200) AND		// C > MA(L, 200) 絕對是保命符 千萬不可移調!!!
+		C > O AND					// 收紅
+		Ref(HighPrice, -1) - Ref(LowPrice, -1) > 200;		//避免盤整 效果似乎普通
+		
+Sell =  L < Ref(LowCPrice, -1) ;
+SellPrice =  iif((Ref(LowCPrice, -1) < OPEN), Ref(LowCPrice, -1) -2, Open);
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+
+StopLoss= Optimize("StopLoss", 100, 10, 200, 5);
+ApplyStop(Type=0,Mode=2,Amount=StopLoss,0);
