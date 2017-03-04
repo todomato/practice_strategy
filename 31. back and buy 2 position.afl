@@ -1,5 +1,5 @@
 //------------------------------------------------------
-//  Formula :    參考策略15 開始back and buying system daily (workable 基本)
+//  Formula :    參考策略30 + 最大可持有2口
 //  Author  :    dreamrrrr
 //  note :       1.注意不要勾選同一根bar 進出
 //------------------------------------------------------
@@ -11,7 +11,8 @@ SetOption("MinShares",1);
 SetOption("AccountMargin",10);
 SetOption("RefreshWhenCompleted",True);
 SetOption( "AllowPositionShrinking", True );
-SetOption("MaxOpenPositions",1);
+SetOption("MaxOpenPositions",2);
+SetBacktestMode( backtestRegularRawMulti ); 	// 允許多訊號
 
 // position
 MarginDeposit = 1;
@@ -30,13 +31,14 @@ Buy = C> Ref(LowCPrice, -1) AND 							// 收高於前5天最低
 		AND Ref(HighPrice, -1) - Ref(LowCPrice, -1) > 200;	// 避免盤整
 		
 // 2.TODO 重新研究出場
-drawdown = Ref((HHV(H, 3)), -1) - L;
+days = Optimize("days", 3, 1,15,1);
+drawdown = Ref((HHV(H, days)), -1) - L;
 Sell = L < Ref(LowPrice, -1) AND drawdown > 200 ;
 sellDiff =  -2;
 SellPrice =  iif((Ref(LowPrice, -1) < OPEN), Ref(LowPrice, -1) + sellDiff , Open + sellDiff );
 
-Buy = ExRem(Buy, Sell);
-Sell = ExRem(Sell, Buy);
+//Buy = ExRem(Buy, Sell);
+//Sell = ExRem(Sell, Buy);
 
 
 //StopLoss= Optimize("StopLoss", 200, 10, 200, 5);

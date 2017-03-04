@@ -6,13 +6,13 @@ _SECTION_END();
 
 _SECTION_BEGIN("Price1");
 SetChartOptions(0,chartShowArrows|chartShowDates);
-_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} \n  開 %g,\n 收 %g (%.1f%%) \n 高 %g, 低 %g,\n  {{VALUES}}", O, C, SelectedValue( ROC( C, 1 )), H, L));
 Plot( C, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
 _SECTION_END();
 
 _SECTION_BEGIN("Price2");
 SetChartOptions(0,chartShowArrows|chartShowDates);
-_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} \n\n 開 %g,\n 收 %g (%.1f%%) \n\n 高 %g,\n 低 %g,\n {{VALUES}}", O, C, SelectedValue( ROC( C, 1 )), H, L ));
 Plot( C, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
 _SECTION_END();
 
